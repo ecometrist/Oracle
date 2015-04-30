@@ -1,0 +1,34 @@
+WITH DBNAM 
+     AS (SELECT * 
+         FROM   global_name) 
+SELECT (SELECT * 
+        FROM   DBNAM)                        AS DB,
+       MIN(To_char(MODIFYTS, 'DD-MON-YYYY HH24:MI:SS')) AS MINMODIFYTS,
+       MAX(To_char(MODIFYTS, 'DD-MON-YYYY HH24:MI:SS')) AS MAXMODIFYTS,
+       state                                 AS STATE, 
+       Trim(flow_name)                       AS SERVICE_NAME, 
+       Trim(sub_flow_name)                   AS Sub_Service_Name,
+       Count(Substr(Trim(errorcode), 1, 20)) AS CNT, 
+       Trim(errorcode) AS errorcode,
+       Substr(Trim(errorstring), 1, 50)      AS ERROR_STRING,
+      (SELECT To_char(SYSDATE, 'DD-MON-YYYY HH24:MI:SS') FROM DUAL) AS RUNTIME_TS
+FROM   STERPRD.yfs_reprocess_error RE 
+WHERE  ( state IN ( 'Initial'
+-- , 'Saved' 
+) 
+          )
+GROUP  BY
+          errorcode,
+--          Substr(Trim(errorcode), 1, 20),
+          state,
+          flow_name, 
+          sub_flow_name,
+          Substr(Trim(errorstring), 1, 50)
+ORDER  BY 
+          state ASC
+--        , CNT DESC
+        , UPPER(Substr(Trim(errorcode), 1, 10)) 
+        , sub_flow_name 
+        , errorcode
+        , error_string
+; 
